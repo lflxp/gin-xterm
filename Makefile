@@ -3,7 +3,7 @@
 push: 
 	git add .
 	git commit -m "`date`"
-	git push
+	git push origin master
 
 all: install
 	npm run dev
