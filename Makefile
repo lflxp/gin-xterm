@@ -1,4 +1,7 @@
-.PHONY: push install clean all
+.PHONY: push install clean all pull
+
+pull:
+	git pull origin master
 
 push: 
 	git add .
