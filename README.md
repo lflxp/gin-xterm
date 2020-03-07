@@ -12,14 +12,6 @@ cd gin-xterm
 make all
 ```
 
-`后端` [message](https://github.com/lflxp/message)
-
-```bash
-cd message
-go install
-./message
-```
-
 ## Xtermjs 知识点
 
 1. 是否需要解析键盘的各种回车、ctrl+c、ctrl+d等操作
