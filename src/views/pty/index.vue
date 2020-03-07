@@ -55,7 +55,7 @@ export default {
       }
     })
 
-    const ws = new WebSocket('ws://127.0.0.1:8888/api/ws/ping4')
+    const ws = new WebSocket('ws://127.0.0.1:8888/api/ws/ping5')
     ws.onopen = function(evt) {
       console.log('OPEN')
     }

@@ -6,14 +6,14 @@
       title="xp@127.0.0.1"
       center
       fullscreen
+      :modal="false"
+      :destroy-on-close="true"
       @opened="doOpened"
       @open="doOpen"
       @close="doClose"
-      :modal="false"
-      :destroy-on-close="true"
     >
 
-      <div ref="terminal"></div>
+      <div ref="terminal" />
 
     </el-dialog>
   </div>
@@ -31,9 +31,9 @@ import 'xterm/dist/xterm.css'
 // import config from '@/config/config'
 
 const defaultTheme = {
-  foreground: '#ffffff',
-  background: '#1b212f',
-  cursor: '#ffffff',
+  foreground: '#ffffff', // 字体
+  background: '#1b212f', // 背景色
+  cursor: '#ffffff', // 设置光标
   selection: 'rgba(255, 255, 255, 0.3)',
   black: '#000000',
   brightBlack: '#808080',
@@ -69,8 +69,8 @@ const bindTerminalResize = (term, websocket) => {
     term.off('resize', onTermResize)
   })
 }
+
 const bindTerminal = (term, websocket, bidirectional, bufferedTime) => {
-  term.write('\r\nWelcome to Felix Web Ssh Terminal\n\r\n')
   term.socket = websocket
   let messageBuffer = null
   const handleWebSocketMessage = function(ev) {
@@ -96,13 +96,8 @@ const bindTerminal = (term, websocket, bidirectional, bufferedTime) => {
     //   })
     // )
     websocket.send(data)
-    console.log(data)
 
-    if (data === '\r') {
-      term.write('\r\n' + data)
-    } else {
-      term.write(data)
-    }
+    term.write(data)
   }
 
   websocket.onmessage = handleWebSocketMessage
@@ -112,7 +107,8 @@ const bindTerminal = (term, websocket, bidirectional, bufferedTime) => {
 
   // send heartbeat package to avoid closing webSocket connection in some proxy environmental such as nginx.
   const heartBeatTimer = setInterval(function() {
-    websocket.send(JSON.stringify({ type: 'heartbeat', data: '' }))
+    // websocket.send(JSON.stringify({ type: 'heartbeat', data: '' }))
+    websocket.send('ping\r\n')
   }, 20 * 1000)
 
   websocket.addEventListener('close', function() {
@@ -132,7 +128,9 @@ export default {
       v: this.visible,
       ws: null,
       term: null,
-      thisV: this.visible
+      thisV: this.visible,
+      rows: 35,
+      cols: 100
     }
   },
   computed: {
@@ -177,20 +175,45 @@ export default {
       Terminal.applyAddon(fit)
       Terminal.applyAddon(webLinks)
       Terminal.applyAddon(search)
+      // 获取容器宽高/字号大小，定义行数和列数
+      // https://www.cnblogs.com/lhl66/p/7908133.html
+      // this.rows = document.body.clientHeight / 16 - 5
+      // this.cols = document.body.clientWidth / 14
+
       this.term = new Terminal({
-        rows: 35,
+        rendererType: 'canvas', // 渲染类型
+        rows: this.rows,
+        cols: this.cols,
+        convertEol: true, // 启用时，光标将设置为下一行的开头
+        scrollback: 10, // 终端中的回滚量
+        disableStdin: false, // 是否应禁用输入
         fontSize: 18,
-        cursorBlink: true,
-        cursorStyle: 'bar',
+        cursorBlink: true, // 光标闪烁
+        cursorStyle: 'bar', // 光标样式 underline
         bellStyle: 'sound',
         theme: defaultTheme
       })
+      this.term._initialized = true
+      this.term.prompt = () => {
+        this.term.write('\r\n')
+      }
+
+      this.term.writeln('Welcome to \x1B[1;3;31mxterm.js\x1B[0m')
+      this.term.writeln('This is a local terminal emulation, without a real terminal in the back-end.')
+      this.term.writeln('Type some keys and commands to play around.')
+      this.term.prompt()
+
+      this.term.on('key', function(key, ev) {
+        console.log(key, ev, ev.keyCode)
+      })
+
       this.term.open(this.$refs.terminal)
       this.term.webLinksInit(this.doLink)
       // term.on("resize", this.onTerminalResize);
+      this.term.on('resize', this.onWindowResize)
       window.addEventListener('resize', this.onWindowResize)
       this.term.fit() // first resizing
-      this.ws = new WebSocket('ws://127.0.0.1:8888/api/ws/ping4')
+      this.ws = new WebSocket('ws://127.0.0.1:8888/api/ws/ping5')
       this.ws.onerror = () => {
         this.$message.error('ws has no token, please login first')
         this.$router.push({ name: 'login' })
