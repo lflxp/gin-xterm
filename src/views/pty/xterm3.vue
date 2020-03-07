@@ -28,7 +28,6 @@ import * as search from 'xterm/lib/addons/search/search'
 
 import 'xterm/lib/addons/fullscreen/fullscreen.css'
 import 'xterm/dist/xterm.css'
-// import config from '@/config/config'
 
 const defaultTheme = {
   foreground: '#ffffff', // 字体
@@ -54,13 +53,14 @@ const defaultTheme = {
 }
 const bindTerminalResize = (term, websocket) => {
   const onTermResize = size => {
-    websocket.send(
-      JSON.stringify({
-        type: 'resize',
-        rows: size.rows,
-        cols: size.cols
-      })
-    )
+    // websocket.send(
+    //   JSON.stringify({
+    //     type: 'resize',
+    //     rows: size.rows,
+    //     cols: size.cols
+    //   })
+    // )
+    websocket.send('2' + Base64.encode(size.rows + ':' + size.cols))
   }
   // register resize event.
   term.on('resize', onTermResize)
@@ -95,9 +95,9 @@ const bindTerminal = (term, websocket, bidirectional, bufferedTime) => {
     //     cmd: Base64.encode(data) // encode data as base64 format
     //   })
     // )
-    websocket.send(data)
+    websocket.send('0' + Base64.encode(data))
 
-    term.write(data)
+    // term.write(data)
   }
 
   websocket.onmessage = handleWebSocketMessage
@@ -108,7 +108,7 @@ const bindTerminal = (term, websocket, bidirectional, bufferedTime) => {
   // send heartbeat package to avoid closing webSocket connection in some proxy environmental such as nginx.
   const heartBeatTimer = setInterval(function() {
     // websocket.send(JSON.stringify({ type: 'heartbeat', data: '' }))
-    websocket.send('ping\r\n')
+    websocket.send('1')
   }, 20 * 1000)
 
   websocket.addEventListener('close', function() {
